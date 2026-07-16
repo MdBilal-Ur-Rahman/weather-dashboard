@@ -29,11 +29,22 @@ const RecentSearches = ({
   const handleDelete = async (e, item) => {
     e.stopPropagation();
 
+    // ==========================
+    // DEBUG LOGS
+    // ==========================
+    console.log("========== DELETE CLICK ==========");
+    console.log("Deleting Item:", item);
+    console.log("Delete ID:", item._id);
+    console.log("All Recent Searches:", recentSearches);
+
     try {
-      await deleteHistory(item._id);
+      const response = await deleteHistory(item._id);
+
+      console.log("Delete Response:", response);
+
       await onRefresh?.();
     } catch (err) {
-      console.error(err);
+      console.error("Delete Error:", err);
       alert("Failed to delete history.");
     }
   };
