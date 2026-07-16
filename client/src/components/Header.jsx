@@ -64,10 +64,16 @@ const Header = () => {
             {today}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-white/70 min-w-0">
+          {/* <div className="flex flex-wrap items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-white/70 min-w-0">
             <FaGithub />
             <span className="truncate">React • Node • MongoDB • OpenWeather</span>
-          </div>
+          </div> */}
+          <div className="flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-white/70 max-w-full">
+  <FaGithub className="shrink-0" />
+  <span className="text-center whitespace-normal sm:whitespace-nowrap">
+    React • Node • MongoDB • OpenWeather
+  </span>
+</div>
 
         </div>
 
