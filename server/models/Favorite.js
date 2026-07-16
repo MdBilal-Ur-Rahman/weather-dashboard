@@ -12,8 +12,8 @@ const favoriteSchema = new mongoose.Schema(
 
     country: {
       type: String,
+      required: true,
       trim: true,
-      default: "",
     },
   },
   {

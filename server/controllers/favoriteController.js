@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Favorite = require("../models/Favorite");
 
 // ==============================
@@ -5,14 +6,21 @@ const Favorite = require("../models/Favorite");
 // ==============================
 const getFavorites = async (req, res) => {
   try {
-    const favorites = await Favorite.find().sort({ createdAt: -1 });
+    const favorites = await Favorite.find().sort({
+      createdAt: -1,
+    });
+
+    console.log(
+      "📋 Favorite IDs:",
+      favorites.map((item) => item._id.toString())
+    );
 
     return res.status(200).json({
       success: true,
       data: favorites,
     });
   } catch (error) {
-    console.error("Get Favorites Error:", error);
+    console.error("❌ Get Favorites Error:", error);
 
     return res.status(500).json({
       success: false,
@@ -37,44 +45,30 @@ const addFavorite = async (req, res) => {
 
     city = city.trim();
 
-    // Check duplicate (case-insensitive)
-    const existing = await Favorite.findOne({
-      city: { $regex: new RegExp(`^${city}$`, "i") },
+    // Remove duplicate city first
+    await Favorite.deleteMany({
+      city: {
+        $regex: new RegExp(`^${city}$`, "i"),
+      },
     });
-
-    if (existing) {
-      return res.status(200).json({
-        success: true,
-        message: "City already in favorites.",
-        data: existing,
-      });
-    }
 
     const favorite = await Favorite.create({
       city,
       country,
     });
 
+    console.log("✅ Favorite Added:", favorite);
+
     return res.status(201).json({
       success: true,
-      message: "Favorite added successfully.",
       data: favorite,
     });
-
   } catch (error) {
-    console.error("Add Favorite Error:", error);
-
-    // Mongo Duplicate Key
-    if (error.code === 11000) {
-      return res.status(200).json({
-        success: true,
-        message: "City already in favorites.",
-      });
-    }
+    console.error("❌ Add Favorite Error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Unable to add favorite.",
+      message: error.message,
     });
   }
 };
@@ -84,9 +78,31 @@ const addFavorite = async (req, res) => {
 // ==============================
 const deleteFavorite = async (req, res) => {
   try {
-    const favorite = await Favorite.findByIdAndDelete(req.params.id);
+    console.log("\n==========================");
+    console.log("🗑 FAVORITE DELETE");
+    console.log("Incoming ID:", req.params.id);
 
-    if (!favorite) {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Favorite ID",
+      });
+    }
+
+    const allFavorites = await Favorite.find();
+
+    console.log(
+      "Database IDs:",
+      allFavorites.map((item) => item._id.toString())
+    );
+
+    const deleted = await Favorite.findOneAndDelete({
+      _id: req.params.id,
+    });
+
+    console.log("Deleted:", deleted);
+
+    if (!deleted) {
       return res.status(404).json({
         success: false,
         message: "Favorite not found.",
@@ -97,13 +113,12 @@ const deleteFavorite = async (req, res) => {
       success: true,
       message: "Favorite removed successfully.",
     });
-
   } catch (error) {
-    console.error("Delete Favorite Error:", error);
+    console.error("❌ Delete Favorite Error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Unable to delete favorite.",
+      message: error.message,
     });
   }
 };

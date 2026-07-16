@@ -14,7 +14,6 @@ const formatWeather = (data) => ({
   city: data.name,
   country: data.sys.country,
 
-  // Current Temperature
   temp: data.main.temp,
   temperature: data.main.temp,
 
@@ -28,16 +27,13 @@ const formatWeather = (data) => ({
 
   visibility: data.visibility / 1000,
 
-  // Wind
   wind: data.wind.speed,
   windSpeed: data.wind.speed,
 
-  // Weather
   weather: data.weather[0].main,
   description: data.weather[0].description,
   icon: data.weather[0].icon,
 
-  // Coordinates
   lat: data.coord.lat,
   lon: data.coord.lon,
 });
@@ -47,19 +43,26 @@ const formatWeather = (data) => ({
 // ======================================
 const saveHistory = async (weatherData) => {
   try {
-    await SearchHistory.deleteMany({
-      city: {
-        $regex: new RegExp(`^${weatherData.city}$`, "i"),
+    await SearchHistory.findOneAndUpdate(
+      {
+        city: {
+          $regex: new RegExp(`^${weatherData.city}$`, "i"),
+        },
       },
-    });
-
-    await SearchHistory.create({
-      city: weatherData.city,
-      country: weatherData.country,
-      temperature: weatherData.temp,
-    });
+      {
+        city: weatherData.city,
+        country: weatherData.country,
+        temperature: weatherData.temp,
+        searchedAt: new Date(),
+      },
+      {
+        upsert: true,
+        new: true,
+        runValidators: true,
+      }
+    );
   } catch (err) {
-    console.error("History Save Error:", err.message);
+    console.error("History Save Error:", err);
   }
 };
 
