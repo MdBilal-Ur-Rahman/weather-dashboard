@@ -14,7 +14,10 @@ const formatWeather = (data) => ({
   city: data.name,
   country: data.sys.country,
 
+  // Current Temperature
+  temp: data.main.temp,
   temperature: data.main.temp,
+
   feelsLike: data.main.feels_like,
 
   tempMin: data.main.temp_min,
@@ -25,11 +28,16 @@ const formatWeather = (data) => ({
 
   visibility: data.visibility / 1000,
 
+  // Wind
+  wind: data.wind.speed,
   windSpeed: data.wind.speed,
 
+  // Weather
   weather: data.weather[0].main,
   description: data.weather[0].description,
+  icon: data.weather[0].icon,
 
+  // Coordinates
   lat: data.coord.lat,
   lon: data.coord.lon,
 });
@@ -48,7 +56,7 @@ const saveHistory = async (weatherData) => {
     await SearchHistory.create({
       city: weatherData.city,
       country: weatherData.country,
-      temperature: weatherData.temperature,
+      temperature: weatherData.temp,
     });
   } catch (err) {
     console.error("History Save Error:", err.message);

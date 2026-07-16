@@ -8,7 +8,8 @@ const fetchJson = async (url, options = {}) => {
 
   const data = await response.json();
 
-  if (!response.ok) {
+  // Agar backend duplicate city ko success ke saath return kare
+  if (!response.ok && !data.success) {
     throw new Error(data.message || "Something went wrong");
   }
 
@@ -45,7 +46,9 @@ export const addFavorite = async (city, country = "") => {
 // Delete Favorite
 // ==============================
 export const deleteFavorite = async (id) => {
-  return await fetchJson(`${API_URL}/favorites/${id}`, {
+  const res = await fetchJson(`${API_URL}/favorites/${id}`, {
     method: "DELETE",
   });
+
+  return res;
 };

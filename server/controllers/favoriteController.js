@@ -7,14 +7,16 @@ const getFavorites = async (req, res) => {
   try {
     const favorites = await Favorite.find().sort({ createdAt: -1 });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: favorites,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Get Favorites Error:", error);
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to fetch favorites.",
     });
   }
 };
@@ -24,21 +26,27 @@ const getFavorites = async (req, res) => {
 // ==============================
 const addFavorite = async (req, res) => {
   try {
-    const { city, country } = req.body;
+    let { city, country } = req.body;
 
-    if (!city) {
+    if (!city || !city.trim()) {
       return res.status(400).json({
         success: false,
-        message: "City is required",
+        message: "City is required.",
       });
     }
 
-    const exists = await Favorite.findOne({ city });
+    city = city.trim();
 
-    if (exists) {
-      return res.status(400).json({
-        success: false,
-        message: "City already exists",
+    // Check duplicate (case-insensitive)
+    const existing = await Favorite.findOne({
+      city: { $regex: new RegExp(`^${city}$`, "i") },
+    });
+
+    if (existing) {
+      return res.status(200).json({
+        success: true,
+        message: "City already in favorites.",
+        data: existing,
       });
     }
 
@@ -47,14 +55,26 @@ const addFavorite = async (req, res) => {
       country,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
+      message: "Favorite added successfully.",
       data: favorite,
     });
+
   } catch (error) {
-    res.status(500).json({
+    console.error("Add Favorite Error:", error);
+
+    // Mongo Duplicate Key
+    if (error.code === 11000) {
+      return res.status(200).json({
+        success: true,
+        message: "City already in favorites.",
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Unable to add favorite.",
     });
   }
 };
@@ -64,16 +84,26 @@ const addFavorite = async (req, res) => {
 // ==============================
 const deleteFavorite = async (req, res) => {
   try {
-    await Favorite.findByIdAndDelete(req.params.id);
+    const favorite = await Favorite.findByIdAndDelete(req.params.id);
 
-    res.status(200).json({
+    if (!favorite) {
+      return res.status(404).json({
+        success: false,
+        message: "Favorite not found.",
+      });
+    }
+
+    return res.status(200).json({
       success: true,
-      message: "Favorite deleted",
+      message: "Favorite removed successfully.",
     });
+
   } catch (error) {
-    res.status(500).json({
+    console.error("Delete Favorite Error:", error);
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Unable to delete favorite.",
     });
   }
 };

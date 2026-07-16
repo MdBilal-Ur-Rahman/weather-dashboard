@@ -10,12 +10,26 @@ const SearchBox = ({ onSearch, onUseLocation }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!city.trim() || loadingSearch) return;
+    const cityName = city.trim();
+
+    if (!cityName || loadingSearch) return;
+
+    // Prevent invalid searches like 12345 or @@@@
+    const cityRegex = /^[a-zA-Z\s-]+$/;
+
+    if (!cityRegex.test(cityName)) {
+      alert("Please enter a valid city name.");
+      return;
+    }
 
     try {
       setLoadingSearch(true);
-      await onSearch(city.trim());
+
+      await onSearch(cityName);
+
       setCity("");
+    } catch (error) {
+      console.error(error);
     } finally {
       setLoadingSearch(false);
     }
@@ -26,7 +40,10 @@ const SearchBox = ({ onSearch, onUseLocation }) => {
 
     try {
       setLoadingLocation(true);
+
       await onUseLocation();
+    } catch (error) {
+      console.error(error);
     } finally {
       setLoadingLocation(false);
     }
@@ -52,6 +69,8 @@ const SearchBox = ({ onSearch, onUseLocation }) => {
             type="text"
             value={city}
             placeholder="Search city..."
+            autoComplete="off"
+            maxLength={50}
             onChange={(e) => setCity(e.target.value)}
             className="h-14 w-full rounded-2xl border border-white/20 bg-white/15 pl-14 pr-4 text-white placeholder:text-white/60 outline-none transition focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/40"
           />

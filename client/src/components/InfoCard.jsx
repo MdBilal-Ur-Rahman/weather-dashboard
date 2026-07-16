@@ -1,11 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
-  WiDaySunny,
-  WiCloud,
-  WiRain,
-  WiSnow,
-  WiThunderstorm,
   WiHumidity,
   WiStrongWind,
   WiBarometer,
@@ -21,65 +16,43 @@ import {
   getFavorites,
 } from "../services/favoriteApi";
 
-const getWeatherIcon = (weather, size = 110) => {
-  switch (weather?.toLowerCase()) {
-    case "clear":
-      return (
-        <WiDaySunny
-          size={size}
-          className="text-yellow-300 drop-shadow-[0_0_30px_rgba(251,191,36,0.45)]"
-        />
-      );
+// ======================================
+// OpenWeather Official Icon
+// ======================================
+const WeatherIcon = ({
+  icon,
+  size = 110,
+  alt = "Weather",
+}) => {
+  const code = icon || "01d";
 
-    case "clouds":
-      return (
-        <WiCloud
-          size={size}
-          className="text-slate-200 drop-shadow-[0_0_20px_rgba(255,255,255,0.12)]"
-        />
-      );
-
-    case "rain":
-    case "drizzle":
-      return (
-        <WiRain
-          size={size}
-          className="text-sky-300 drop-shadow-[0_0_20px_rgba(56,189,248,0.45)]"
-        />
-      );
-
-    case "snow":
-      return (
-        <WiSnow
-          size={size}
-          className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.45)]"
-        />
-      );
-
-    case "thunderstorm":
-      return (
-        <WiThunderstorm
-          size={size}
-          className="text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.45)]"
-        />
-      );
-
-    default:
-      return (
-        <WiDaySunny
-          size={size}
-          className="text-yellow-300 drop-shadow-[0_0_30px_rgba(251,191,36,0.45)]"
-        />
-      );
-  }
+  return (
+    <img
+      src={`https://openweathermap.org/img/wn/${code}@4x.png`}
+      alt={alt}
+      width={size}
+      height={size}
+      loading="lazy"
+      draggable={false}
+      className="select-none drop-shadow-[0_0_30px_rgba(255,255,255,0.25)]"
+    />
+  );
 };
 
+// ======================================
+// Weather Stat Card
+// ======================================
 const WeatherStat = ({ icon, title, value }) => (
   <motion.div
-    whileHover={{ y: -6, scale: 1.04 }}
+    whileHover={{
+      y: -6,
+      scale: 1.04,
+    }}
     className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur-xl"
   >
-    <div className="flex justify-center text-4xl text-white">{icon}</div>
+    <div className="flex justify-center text-4xl text-white">
+      {icon}
+    </div>
 
     <p className="mt-3 text-center text-sm text-white/70">
       {title}
@@ -91,54 +64,58 @@ const WeatherStat = ({ icon, title, value }) => (
   </motion.div>
 );
 
-const WeatherVisual = ({ condition = "clear", temperature = 0 }) => {
-  const visuals = {
-    clear: {
-      emoji: "☀️",
-      title: "Sunny",
-      bg: "from-amber-400/30 via-orange-400/20 to-yellow-300/10",
-    },
-    clouds: {
-      emoji: "☁️",
-      title: "Cloudy",
-      bg: "from-slate-500/30 via-slate-400/20 to-sky-400/10",
-    },
-    rain: {
-      emoji: "🌧️",
-      title: "Rainy",
-      bg: "from-sky-600/30 via-cyan-500/20 to-blue-500/10",
-    },
-    drizzle: {
-      emoji: "🌦️",
-      title: "Drizzle",
-      bg: "from-sky-500/30 via-cyan-400/20 to-blue-500/10",
-    },
-    snow: {
-      emoji: "❄️",
-      title: "Snow",
-      bg: "from-slate-200/30 via-cyan-100/20 to-sky-200/10",
-    },
-    thunderstorm: {
-      emoji: "⛈️",
-      title: "Storm",
-      bg: "from-violet-500/30 via-indigo-500/20 to-slate-600/10",
-    },
+// ======================================
+// Weather Visual Card
+// ======================================
+const WeatherVisual = ({
+  icon,
+  condition,
+  temperature,
+}) => {
+  const backgrounds = {
+    Clear:
+      "from-amber-400/30 via-orange-400/20 to-yellow-300/10",
+
+    Clouds:
+      "from-slate-500/30 via-slate-400/20 to-sky-400/10",
+
+    Rain:
+      "from-sky-600/30 via-cyan-500/20 to-blue-500/10",
+
+    Drizzle:
+      "from-sky-500/30 via-cyan-400/20 to-blue-500/10",
+
+    Thunderstorm:
+      "from-violet-500/30 via-indigo-500/20 to-slate-700/10",
+
+    Snow:
+      "from-slate-200/30 via-cyan-100/20 to-sky-200/10",
+
+    Mist:
+      "from-slate-500/20 via-gray-400/20 to-slate-300/10",
+
+    Fog:
+      "from-slate-500/20 via-gray-400/20 to-slate-300/10",
   };
 
-  const current =
-    visuals[condition?.toLowerCase()] || visuals.clear;
+  const bg =
+    backgrounds[condition] || backgrounds.Clear;
 
   return (
     <div
-      className={`relative flex h-56 w-full max-w-[240px] items-center justify-center overflow-hidden rounded-[30px] border border-white/20 bg-gradient-to-br ${current.bg} p-6 shadow-inner`}
+      className={`relative flex h-56 w-full max-w-[240px] items-center justify-center overflow-hidden rounded-[30px] border border-white/20 bg-gradient-to-br ${bg} p-6 shadow-inner`}
     >
       <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
 
       <div className="relative text-center">
-        <div className="text-7xl">{current.emoji}</div>
+        <WeatherIcon
+          icon={icon}
+          size={120}
+          alt={condition}
+        />
 
         <p className="mt-3 text-sm font-semibold uppercase tracking-[0.28em] text-white/70">
-          {current.title}
+          {condition}
         </p>
 
         <p className="mt-2 text-4xl font-bold text-white">
@@ -148,7 +125,6 @@ const WeatherVisual = ({ condition = "clear", temperature = 0 }) => {
     </div>
   );
 };
-
 const InfoCard = ({ weatherInfo, onFavoritesChange }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteId, setFavoriteId] = useState(null);
@@ -159,6 +135,25 @@ const InfoCard = ({ weatherInfo, onFavoritesChange }) => {
     month: "long",
     year: "numeric",
   });
+
+  const weatherIcon = useMemo(() => {
+    if (weatherInfo.icon) return weatherInfo.icon;
+
+    const map = {
+      Clear: "01d",
+      Clouds: "03d",
+      Rain: "10d",
+      Drizzle: "09d",
+      Thunderstorm: "11d",
+      Snow: "13d",
+      Mist: "50d",
+      Fog: "50d",
+      Haze: "50d",
+      Smoke: "50d",
+    };
+
+    return map[weatherInfo.weather] || "01d";
+  }, [weatherInfo]);
 
   useEffect(() => {
     const loadFavorite = async () => {
@@ -277,6 +272,7 @@ const InfoCard = ({ weatherInfo, onFavoritesChange }) => {
           </div>
 
           <WeatherVisual
+            icon={weatherIcon}
             condition={weatherInfo.weather}
             temperature={Math.round(weatherInfo.temp)}
           />
@@ -315,7 +311,13 @@ const InfoCard = ({ weatherInfo, onFavoritesChange }) => {
         />
 
         <WeatherStat
-          icon={getWeatherIcon(weatherInfo.weather, 40)}
+          icon={
+            <WeatherIcon
+              icon={weatherIcon}
+              size={55}
+              alt={weatherInfo.weather}
+            />
+          }
           title="Condition"
           value={weatherInfo.weather}
         />

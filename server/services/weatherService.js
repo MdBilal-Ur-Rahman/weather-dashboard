@@ -16,10 +16,10 @@ const weatherApi = axios.create({
 // ======================================
 const handleError = (error, fallback) => {
   const err = new Error(
-    error.response?.data?.message || fallback
+    error.response?.data?.message || error.message || fallback
   );
 
-  err.status = error.response?.status || 500;
+  err.status = error.response?.status || error.status || 500;
 
   throw err;
 };
@@ -29,12 +29,15 @@ const handleError = (error, fallback) => {
 // ======================================
 const fetchWeatherByCity = async (city) => {
   try {
+    const searchCity = city.trim();
+
     const { data } = await weatherApi.get("/weather", {
       params: {
-        q: city,
+        q: searchCity,
       },
     });
 
+    // Return exact data from OpenWeather
     return data;
   } catch (error) {
     handleError(error, "Unable to fetch weather");
@@ -60,13 +63,13 @@ const fetchWeatherByLocation = async (lat, lon) => {
 };
 
 // ======================================
-// 5 Day Forecast By City
+// 5 Day Forecast
 // ======================================
 const fetchForecastByCity = async (city) => {
   try {
     const { data } = await weatherApi.get("/forecast", {
       params: {
-        q: city,
+        q: city.trim(),
       },
     });
 
@@ -83,7 +86,7 @@ const fetchHourlyForecast = async (city) => {
   try {
     const { data } = await weatherApi.get("/forecast", {
       params: {
-        q: city,
+        q: city.trim(),
       },
     });
 

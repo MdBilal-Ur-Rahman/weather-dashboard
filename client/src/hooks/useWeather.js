@@ -90,7 +90,10 @@ const useWeather = () => {
 
       return weatherData;
     } catch (err) {
-      console.error("Search Error:", err);
+      // console.error("Search Error:", err);
+      if (err.status !== 404) {
+  console.error("Search Error:", err);
+}
 
       clearData();
 
